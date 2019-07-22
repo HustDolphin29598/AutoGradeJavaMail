@@ -9,19 +9,20 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import javax.mail.Address;
+import javax.mail.Flags;
 import javax.mail.Folder;
 import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.mail.Session;
 import javax.mail.Store;
 import javax.mail.internet.InternetAddress;
+import javax.mail.search.FlagTerm;
 
 import com.huy.topica.mail.main.Log;
 import com.huy.topica.mail.main.WorkerThread;
-import com.sun.mail.imap.IMAPFolder;
 
 public class MailCheckingIMAP {
-    // default number of threads is 5
+    // default number of threads is 3
     private int numOfThreads = 3;
     private Calendar fromDate = null;
     private Calendar toDate = null;
@@ -85,52 +86,49 @@ public class MailCheckingIMAP {
         this.mailName = mailName;
         this.password = password;
         ExecutorService executor = Executors.newFixedThreadPool(numOfThreads);
-        IMAPFolder folder = null;
+        Folder folder = null;
         Store store = null;
         String subject = null;
-        try {
-            Properties props = System.getProperties();
-            props.setProperty("mail.store.protocol", storeType);
+        Properties props = System.getProperties();
+        props.setProperty("mail.store.protocol", storeType);
 
-            Session session = Session.getDefaultInstance(props, null);
+        Session session = Session.getDefaultInstance(props, null);
 
-            store = session.getStore(storeType);
-            store.connect(host, mailName, password);
+        store = session.getStore(storeType);
+        store.connect(host, mailName, password);
 
-            folder = (IMAPFolder) store.getFolder("inbox"); // This works for both email account
+        folder = store.getFolder("inbox"); // This works for both email account
 
-            if (!folder.isOpen())
-                folder.open(Folder.READ_WRITE);
-            Message[] messages = folder.getMessages();
-            
-//            Flags seen = new Flags(Flags.Flag.SEEN);
-//            FlagTerm unseenFlagTerm = new FlagTerm(seen, false);
-//            Message messages[] = folder.search(unseenFlagTerm);
+        if (!folder.isOpen())
+            folder.open(Folder.READ_WRITE);
+        Message[] messages = folder.getMessages();
 
-            for (int i = 0; i < messages.length; i++) {
-                Message msg = messages[i];
-                subject = msg.getSubject();
-                if ("ITLAB-HOMEWORK".equals(subject)) {
-                    Address[] froms = msg.getFrom();
-                    String email = froms == null ? null : ((InternetAddress) froms[0]).getAddress();
-                    Log.info("MESSAGE " + (i + 1) + ":");
-                    Log.info("Subject: " + subject);
-                    Log.info("From: " + email);
-                    Log.info("To: " + msg.getAllRecipients()[0]);
-                    Log.info("Date: " + msg.getReceivedDate());
-                    Log.info("Size: " + msg.getSize());
-                    msg.getFlags();
-                    Log.info("Body: \n" + msg.getContent());
-                    Log.info(msg.getContentType());
-                    Date date = msg.getReceivedDate();
-                    Calendar dateReceived = Calendar.getInstance();
-                    dateReceived.setTime(date);
-                    checkDate(executor, dateReceived, msg, email);
-                }
+//        Flags seen = new Flags(Flags.Flag.SEEN);
+//        FlagTerm unseenFlagTerm = new FlagTerm(seen, false);
+//        Message[] messages = folder.search(unseenFlagTerm);
+
+        for (int i = 0; i < messages.length; i++) {
+            Message msg = messages[i];
+            subject = msg.getSubject();
+            if ("ITLAB-HOMEWORK".equals(subject)) {
+                Address[] froms = msg.getFrom();
+                String email = froms == null ? null : ((InternetAddress) froms[0]).getAddress();
+                Log.info("MESSAGE " + (i + 1) + ":");
+                Log.info("Subject: " + subject);
+                Log.info("From: " + email);
+                Log.info("To: " + msg.getAllRecipients()[0]);
+                Log.info("Date: " + msg.getReceivedDate());
+                Log.info("Size: " + msg.getSize());
+                msg.getFlags();
+                Log.info("Body: \n" + msg.getContent());
+                Log.info(msg.getContentType());
+                Date date = msg.getReceivedDate();
+                Calendar dateReceived = Calendar.getInstance();
+                dateReceived.setTime(date);
+                checkDate(executor, dateReceived, msg, email);
             }
-            executor.shutdown();
-        } finally {
-
         }
+        executor.shutdown();
+
     }
 }

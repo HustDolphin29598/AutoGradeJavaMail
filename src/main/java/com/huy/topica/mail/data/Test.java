@@ -4,13 +4,15 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+import com.huy.topica.mail.main.Log;
+
 public class Test {
 
     private Test() {
 
     }
 
-    public static int testExam(String filePath) throws InterruptedException, IOException {
+    public static int testExam(String filePath) throws InterruptedException, IOException{
         int count = 0;
         Process process = null;
         String compilePath = "javac -cp src " + filePath;
@@ -27,7 +29,10 @@ public class Test {
                     count++;
                 }
             }
-        } finally {
+        }catch (NumberFormatException e) {
+            Log.error(e);
+        }
+        finally {
             if (process != null) {
                 process.destroy();
             }
