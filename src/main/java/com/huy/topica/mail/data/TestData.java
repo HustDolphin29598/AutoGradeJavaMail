@@ -11,7 +11,7 @@ public class TestData {
 
     static {
         dateData.put(1, 31);
-        dateData.put(2, 29);
+        dateData.put(2, 28);
         dateData.put(3, 31);
         dateData.put(4, 30);
         dateData.put(5, 31);

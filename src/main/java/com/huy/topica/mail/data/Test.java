@@ -15,7 +15,7 @@ public class Test {
         Process process = null;
         String compilePath = "javac -cp src " + filePath;
 
-        try {
+        try{
             process = Runtime.getRuntime().exec(compilePath);
             process.waitFor();
             for (int month = 1; month <= 12; month++) {
@@ -23,9 +23,8 @@ public class Test {
                 process = Runtime.getRuntime().exec(runPath);
                 BufferedReader in = new BufferedReader(new InputStreamReader(process.getInputStream()));
                 String res;
-                if ((res = in.readLine()) != null) {
-                    if (TestData.check(month, Integer.parseInt(res)))
-                        count++;
+                if ((res = in.readLine()) != null && TestData.check(month, Integer.parseInt(res))) {
+                    count++;
                 }
             }
         } finally {

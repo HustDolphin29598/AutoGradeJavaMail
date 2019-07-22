@@ -1,6 +1,7 @@
 package com.huy.topica.mail.receiver;
 
 import java.io.IOException;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Properties;
 import java.util.concurrent.Executor;
@@ -20,10 +21,10 @@ import com.huy.topica.mail.main.WorkerThread;
 import com.sun.mail.imap.IMAPFolder;
 
 public class MailCheckingIMAP {
-    // default number of threads is 3
+    // default number of threads is 5
     private int numOfThreads = 3;
-    private Date fromDate = null;
-    private Date toDate = null;
+    private Calendar fromDate = null;
+    private Calendar toDate = null;
     private String mailName;
     private String password;
 
@@ -31,17 +32,17 @@ public class MailCheckingIMAP {
         this.numOfThreads = numOfThreads;
     }
 
-    public MailCheckingIMAP(int numOfThreads, Date fromDate, Date toDate) {
+    public MailCheckingIMAP(int numOfThreads, Calendar fromDate, Calendar toDate) {
         this.numOfThreads = numOfThreads;
         this.fromDate = fromDate;
         this.toDate = toDate;
     }
 
-    public void setFromDate(Date fromDate) {
+    public void setFromDate(Calendar fromDate) {
         this.fromDate = fromDate;
     }
 
-    public void setToDate(Date toDate) {
+    public void setToDate(Calendar toDate) {
         this.toDate = toDate;
     }
 
@@ -57,7 +58,7 @@ public class MailCheckingIMAP {
         return numOfThreads;
     }
 
-    private void checkDate(Executor executor, Date date, Message msg, String email) {
+    private void checkDate(Executor executor, Calendar date, Message msg, String email) {
         if (toDate != null && fromDate != null) {
             if (!date.before(fromDate) && !date.after(toDate)) {
                 WorkerThread handler = new WorkerThread(msg, mailName, password, email);
@@ -101,8 +102,11 @@ public class MailCheckingIMAP {
             if (!folder.isOpen())
                 folder.open(Folder.READ_WRITE);
             Message[] messages = folder.getMessages();
-            Log.info("No of Messages : " + folder.getMessageCount());
-            Log.info("No of Unread Messages : " + folder.getUnreadMessageCount());
+            
+//            Flags seen = new Flags(Flags.Flag.SEEN);
+//            FlagTerm unseenFlagTerm = new FlagTerm(seen, false);
+//            Message messages[] = folder.search(unseenFlagTerm);
+
             for (int i = 0; i < messages.length; i++) {
                 Message msg = messages[i];
                 subject = msg.getSubject();
@@ -115,20 +119,18 @@ public class MailCheckingIMAP {
                     Log.info("To: " + msg.getAllRecipients()[0]);
                     Log.info("Date: " + msg.getReceivedDate());
                     Log.info("Size: " + msg.getSize());
+                    msg.getFlags();
                     Log.info("Body: \n" + msg.getContent());
                     Log.info(msg.getContentType());
                     Date date = msg.getReceivedDate();
-                    checkDate(executor, date, msg, email);
+                    Calendar dateReceived = Calendar.getInstance();
+                    dateReceived.setTime(date);
+                    checkDate(executor, dateReceived, msg, email);
                 }
             }
             executor.shutdown();
         } finally {
-            if (folder != null && folder.isOpen()) {
-                folder.close(true);
-            }
-            if (store != null) {
-                store.close();
-            }
+
         }
     }
 }
